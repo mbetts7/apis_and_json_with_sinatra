@@ -16,44 +16,47 @@ get '/' do
 end
 
 post '/result' do
-  search_str = params[:movie]
+  # map of ids or names to values.  whatever put into text box it is the value of the key :movie
+  query = params[:movie]
 
-  # Make a request to the omdb api here!
-  response = Typhoeus.get("http://www.omdbapi.com/", :params => {:s => search_str})
+  
+  # params is not a ruby thing, it is _______________
+  response = Typhoeus.get("http://www.omdbapi.com/", :params => {:s => query})
+  # result we get back is just a string, not an object.  so parse
   result = JSON.parse(response.body)
 
+  movie_arr = []
+  result["Search"].each do |movie| 
+    movie_arr << [movie["Year"], movie["Title"], movie["imdbID"]]
+  end
+  
+  movie_arr.sort!
+
+  
+
   # Modify the html output so that a list of movies is provided.
-  html_str = "<html><head><title>Movie Search Results</title></head><body><h1>Movie Results</h1>\n<ul>"
+  html_str = "<html><head><title>Movie Search Results</title></head><body><h1>Movie Results</h1><ul>"
+  movie_arr.each do |movie|
+    html_str += "<li><a href = /poster/#{movie[2]}> #{movie[1]}, #{movie[0]}</a></li>"
+  end
   
-  
 
-  # html_str += "<li>#{
-    result["Search"].each do |movie| 
-
-      html_str += "<li>Title: #{movie["Title"]}, #{movie["Year"]}</li>"
-    end
-    
-
-# #     </li>
-# # end
-# #     html_str += "</ul></body></html>"
-# # end
-
-# html_str += "<li>Title: <a href=http://www.nba.com> #{movie["Title"]}</a> <br>Year: <a href=http://www.nba.com>#{movie["Year"]}</li><br>"
-#   end
-  html_str << "</ul></body></html>"
+  html_str << "</ul></body></html>"
 end
 
+# <a href = "/poster/:imdb"> 
 
 
 
 
-
-get '/poster/:imdb' do |imdb_id|
+get '/poster/:imdbID' do |imdb_id|
   # Make another api call here to get the url of the poster.
+  response = Typhoeus.get("http://www.omdbapi.com/", :params => {:i => imdb_id})
+  result = JSON.parse(response.body)
+  # result["Search"].each do |movie|
   html_str = "<html><head><title>Movie Poster</title></head><body><h1>Movie Poster</h1>\n"
-  html_str = "<h3>#{imdb_id}</h3>"
-  html_str += '<br /><a href="/">New Search</a></body></html>'
+  html_str = "<br> <img src =#{result["Poster"]}> <br>"
+  html_str += '<a href="/">New Search</a></body></html>'
+
 
 end
-
